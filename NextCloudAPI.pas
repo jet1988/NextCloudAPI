@@ -31,7 +31,7 @@ Type
     procedure NetHTTPClientValidateServerCertificate(const Sender: TObject; const ARequest: TURLRequest;
       const Certificate: TCertificate; var Accepted: Boolean);
     function GetListFolder(Path: string; Depth:integer; var Description: String): TFileList;
-    function DownloadFileToStream(PathFrom, PathTo: string; var Description: String): TStream;
+    function DownloadFileToStream(PathFrom: string; var Description: String): TStream;
     function DownloadFile(PathFrom, PathTo: string; var Description: String): boolean;
     function DownloadFileWithoutName(PathFrom, PathTo: string; var Description: String): boolean;
     function CreatFolder(Path: string; var Description: String): boolean;
@@ -81,7 +81,7 @@ begin
   inherited;
 end;
 
-function TNextCloud.DownloadFileToStream(PathFrom, PathTo: string; var Description: String): TStream;
+function TNextCloud.DownloadFileToStream(PathFrom: string; var Description: String): TStream;
 var Response: IHTTPResponse;
 begin
   Result := nil;
