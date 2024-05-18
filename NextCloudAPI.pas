@@ -31,6 +31,7 @@ Type
     procedure NetHTTPClientValidateServerCertificate(const Sender: TObject; const ARequest: TURLRequest;
       const Certificate: TCertificate; var Accepted: Boolean);
     function GetListFolder(Path: string; Depth:integer; var Description: String): TFileList;
+    function DownloadFileToStream(PathFrom, PathTo: string; var Description: String): TStream;
     function DownloadFile(PathFrom, PathTo: string; var Description: String): boolean;
     function DownloadFileWithoutName(PathFrom, PathTo: string; var Description: String): boolean;
     function CreatFolder(Path: string; var Description: String): boolean;
@@ -80,6 +81,20 @@ begin
   inherited;
 end;
 
+function TNextCloud.DownloadFileToStream(PathFrom, PathTo: string; var Description: String): TStream;
+var Response: IHTTPResponse;
+begin
+  Result := nil;
+  try
+    Response:= FHTTPClient.Get(FBaseURL + PathFrom);
+    Description:= Response.StatusCode.ToString +': '+ Response.StatusText;
+
+    TCustomMemoryStream(Response.ContentStream).SaveToStream(Result);
+  except
+    Result := nil;
+  end;
+end;
+
 function TNextCloud.DownloadFile(PathFrom, PathTo: string; var Description: String): boolean;
 var Response: IHTTPResponse;
     Caption: string;
@@ -105,7 +120,6 @@ begin
   except
       Result := False;
   end;
-
 end;
 
 function TNextCloud.DownloadFileWithoutName(PathFrom, PathTo: string; var Description: String): boolean;
@@ -130,15 +144,15 @@ function TNextCloud.GetListFolder(Path: string; Depth: integer; var Description:
 var Response: IHTTPResponse;
     XMLFile: TXMLDocument;
     MainNode, ChildNode: IXMLNode;
-    Keys: String;
     FileGet: TFileInfo;
     FileDB: TFileList;
 begin
+  result:=nil;
   try
     Response:=FHTTPClient.Execute('PROPFIND', TURI.Create(FBaseURL + Path));
     Description:= Response.StatusCode.ToString +': '+ Response.StatusText;
   except
-    Description:= Description + '. ERROR ';
+    Description:= 'ERROR: ' + Description;
   end;
   if Response.StatusCode=207 then
     begin
