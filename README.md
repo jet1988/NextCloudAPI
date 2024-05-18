@@ -41,11 +41,11 @@ var FileList: TFileList;
 FileList := NextCloud.FileList:= NextCloud.GetListFolder(Path, Depth, Description);  // Depth not release
 
 for var key in FileList.Keys do
-      begin
-      if FileList[key].IsFolder then
-        s:= FileList[key].FilePath + ' | DIR ' + ' | ' + FileList[key].FileDate
-      else
-        s:= FileList[key].FilePath + ' | ' + FormatByteString(FileList[key].FileSize.ToInt64) + ' | ' + FileList[key].FileDate;
-      writeln(s);
-      end;
+  begin
+    if FileList[key].IsFolder then
+      s:= FileList[key].FilePath + ' | DIR ' + ' | ' + FileList[key].FileDate
+    else
+      s:= FileList[key].FilePath + ' | ' + FormatByteString(FileList[key].FileSize.ToInt64) + ' | ' + FileList[key].FileDate;
+    writeln(s);
+  end;
 ```
