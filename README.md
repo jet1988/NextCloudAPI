@@ -1,7 +1,7 @@
 # NextCloudAPI
 Use THTTPNetClient
 
-### NextCloud.Create
+### Create
 ```Pascal
 uses NextCloudAPI;
 
