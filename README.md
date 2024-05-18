@@ -1,1 +1,2 @@
 # NextCloudAPI
+Use THTTPNetClient
