@@ -11,34 +11,34 @@ NextCloud.SetParametrs(BaseURL, Login, Password, IgnorInvalidCertificate);
 
 ### DownloadFile
 ```Pascal
-var Description: string 
-NextCloud.DownloadFile(PathFrom, PathTo, Description);
+var Status: TStatus; 
+NextCloud.DownloadFile(PathFrom, PathTo, Status);
 
-NextCloud.DownloadFileWithoutName(PathFrom, PathTo, Description); //если нужно указать имя файла вручную
+NextCloud.DownloadFileWithoutName(PathFrom, PathTo, Status); //если нужно указать имя файла вручную
 
-var FileStream := NextCloud.DownloadFileToStream(PathFrom, Description);
+var FileStream := NextCloud.DownloadFileToStream(PathFrom, Status);
 ```
 
 ### CreatFolder
 ```Pascal 
-NextCloud.CreatFolder(Path, Description);
+NextCloud.CreatFolder(Path, Status);
 ```
 
 ### UploadFile
 ```Pascal 
-NextCloud.UploadFile(PathTo, PathFrom, Description);
+NextCloud.UploadFile(PathTo, PathFrom, Status);
 ```
 
 ### DeleteFile
 ```Pascal 
-NextCloud.DeleteFile(Path, Description);
+NextCloud.DeleteFile(Path, Status);
 ```
 
 ### FileList 
 ```Pascal
 var FileList: TFileList;
 
-FileList := NextCloud.FileList:= NextCloud.GetListFolder(Path, Depth, Description);  // Depth not release
+FileList := NextCloud.FileList:= NextCloud.GetListFolder(Path, Depth, Status);  
 
 for var key in FileList.Keys do
   begin
