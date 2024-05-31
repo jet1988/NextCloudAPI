@@ -13,6 +13,11 @@ Type
 
   TFileList = TDictionary<String, TFileInfo>;
 
+  TStatus = class
+    Code: Integer;
+    Text: string;
+  end;
+
   TNextCloud = Class
   private
     FHTTPClient: TNetHTTPClient;
@@ -30,13 +35,13 @@ Type
     procedure SetParametrs(const BaseURL, Login, Password: string; IgnorInvalidCertificate: boolean = False);
     procedure NetHTTPClientValidateServerCertificate(const Sender: TObject; const ARequest: TURLRequest;
       const Certificate: TCertificate; var Accepted: Boolean);
-    function GetListFolder(Path: string; Depth:integer; var Description: String): TFileList;
-    function DownloadFileToStream(PathFrom: string; var Description: String): TStream;
-    function DownloadFile(PathFrom, PathTo: string; var Description: String): boolean;
-    function DownloadFileWithoutName(PathFrom, PathTo: string; var Description: String): boolean;
-    function CreatFolder(Path: string; var Description: String): boolean;
-    function UploadFile(PathTo, PathFrom: string; var Description: String): boolean;
-    function DeleteFile(Path: string; var Description: String): boolean;
+    function GetListFolder(Path: string; Depth: Boolean; var Status: TStatus): TFileList;
+    function DownloadFileToStream(PathFrom: string; var Status: TStatus): TStream;
+    function DownloadFile(PathFrom, PathTo: string; var Status: TStatus): boolean;
+    function DownloadFileWithoutName(PathFrom, PathTo: string; var Status: TStatus): boolean;
+    function CreatFolder(Path: string; var Status: TStatus): boolean;
+    function UploadFile(PathTo, PathFrom: string; var Status: TStatus): boolean;
+    function DeleteFile(Path: string; var Status: TStatus): boolean;
   End;
 
 implementation
@@ -51,25 +56,27 @@ begin
   //FHTTPClient.AcceptCharSet:='utf-8';
 end;
 
-function TNextCloud.CreatFolder(Path: string; var Description: String): boolean;
+function TNextCloud.CreatFolder(Path: string; var Status: TStatus): boolean;
 var Response: IHTTPResponse;
 begin
   try
     Response:=FHTTPClient.Execute('MKCOL', TURI.Create(FBaseURL + Path));
     Result := Response.StatusCode=201;
-    Description:= Response.StatusCode.ToString +': '+ Response.StatusText;
+    Status.Code:= Response.StatusCode;
+    Status.Text:= Response.StatusText;
   except
     Result := False;
   end;
 end;
 
-function TNextCloud.DeleteFile(Path: string; var Description: String): boolean;
+function TNextCloud.DeleteFile(Path: string; var Status: TStatus): boolean;
 var Response: IHTTPResponse;
 begin
   try
     Response:=FHTTPClient.Delete(FBaseURL + Path);
     Result := Response.StatusCode=204;
-    Description:= Response.StatusCode.ToString +': '+ Response.StatusText;
+    Status.Code:= Response.StatusCode;
+    Status.Text:= Response.StatusText;
   except
     Result := False;
   end;
@@ -81,13 +88,14 @@ begin
   inherited;
 end;
 
-function TNextCloud.DownloadFileToStream(PathFrom: string; var Description: String): TStream;
+function TNextCloud.DownloadFileToStream(PathFrom: string; var Status: TStatus): TStream;
 var Response: IHTTPResponse;
 begin
   Result := nil;
   try
     Response:= FHTTPClient.Get(FBaseURL + PathFrom);
-    Description:= Response.StatusCode.ToString +': '+ Response.StatusText;
+    Status.Code:= Response.StatusCode;
+    Status.Text:= Response.StatusText;
 
     TCustomMemoryStream(Response.ContentStream).SaveToStream(Result);
   except
@@ -95,14 +103,15 @@ begin
   end;
 end;
 
-function TNextCloud.DownloadFile(PathFrom, PathTo: string; var Description: String): boolean;
+function TNextCloud.DownloadFile(PathFrom, PathTo: string; var Status: TStatus): boolean;
 var Response: IHTTPResponse;
     Caption: string;
 begin
   try
     Response:= FHTTPClient.Get(FBaseURL + PathFrom);
     Result := Response.StatusCode=200;
-    Description:= Response.StatusCode.ToString +': '+ Response.StatusText;
+    Status.Code:= Response.StatusCode;
+    Status.Text:= Response.StatusText;
     Caption:= TNetEncoding.URL.Decode(Response.HeaderValue['Content-Disposition']);
     var p:= pos('filename="', Caption);
     if p>0 then
@@ -122,7 +131,7 @@ begin
   end;
 end;
 
-function TNextCloud.DownloadFileWithoutName(PathFrom, PathTo: string; var Description: String): boolean;
+function TNextCloud.DownloadFileWithoutName(PathFrom, PathTo: string; var Status: TStatus): boolean;
 var Response: IHTTPResponse;
     FileStream: TFileStream;
 begin
@@ -131,7 +140,8 @@ begin
     try
       Response:= FHTTPClient.Get(FBaseURL + PathFrom, FileStream);
       Result := Response.StatusCode=200;
-      Description:= Response.StatusCode.ToString +': '+ Response.StatusText;
+      Status.Code:= Response.StatusCode;
+      Status.Text:= Response.StatusText;
     except
       Result := False;
     end;
@@ -140,7 +150,7 @@ begin
   end;
 end;
 
-function TNextCloud.GetListFolder(Path: string; Depth: integer; var Description: String): TFileList;
+function TNextCloud.GetListFolder(Path: string; Depth: Boolean; var Status: TStatus): TFileList;
 var Response: IHTTPResponse;
     XMLFile: TXMLDocument;
     MainNode, ChildNode: IXMLNode;
@@ -148,12 +158,20 @@ var Response: IHTTPResponse;
     FileDB: TFileList;
 begin
   result:=nil;
+  if Depth then
+    FHTTPClient.CustomHeaders['Depth'] := '0';
   try
     Response:=FHTTPClient.Execute('PROPFIND', TURI.Create(FBaseURL + Path));
-    Description:= Response.StatusCode.ToString +': '+ Response.StatusText;
+    Status.Code:= Response.StatusCode;
+    Status.Text:= Response.StatusText;
   except
-    Description:= 'ERROR: ' + Description;
+   // Description:= 'ERROR: ' + Description;
+    FHTTPClient.CustHeaders.Delete('Depth');
   end;
+
+  var Caption:= Response.ContentAsString();
+
+
   if Response.StatusCode=207 then
     begin
       FileDB:=TFileList.Create;
@@ -204,7 +222,7 @@ begin
     end;
 end;
 
-function TNextCloud.UploadFile(PathTo, PathFrom: string; var Description: String): boolean;
+function TNextCloud.UploadFile(PathTo, PathFrom: string; var Status: TStatus): boolean;
 var Response: IHTTPResponse;
     FileName: string;
 begin
@@ -212,7 +230,8 @@ begin
     FileName:= TPath.GetFileName(PathFrom);
     Response:= FHTTPClient.Put(FBaseURL + PathTo + '/' + FileName, PathFrom);
     Result := Response.StatusCode=201;
-    Description:= Response.StatusCode.ToString +': '+ Response.StatusText;
+    Status.Code:= Response.StatusCode;
+    Status.Text:= Response.StatusText;
   except
     Result := False;
   end;
