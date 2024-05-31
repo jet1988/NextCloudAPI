@@ -27,6 +27,7 @@ type
     Button6: TButton;
     Button7: TButton;
     Button8: TButton;
+    CheckBox2: TCheckBox;
     procedure Button1Click(Sender: TObject);
     procedure Button2Click(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
@@ -54,15 +55,23 @@ uses NextCloudAPI, ConvertFileSize;
 const config = './config.ini';
 var NextCloud: TNextCloud;
 
+function Max(const A, B: word): word;
+begin
+  if A > B then
+    Result := A
+  else
+    Result := B;
+end;
+
 procedure TFormMain.Button1Click(Sender: TObject);
 var Dir: string;
-    Description: String;
+    Status: TStatus;
 begin
   //if SaveDialog1.Execute then
   if SelectDirectory('Выбор директории, в которой создадутся каталони.', ExtractFileDrive(Dir), Dir) then
   begin
-    NextCloud.DownloadFile(Edit4.Text, Dir{SaveDialog1.FileName}, Description);
-    Memo1.Lines.Add(Description);
+    NextCloud.DownloadFile(Edit4.Text, Dir{SaveDialog1.FileName}, Status);
+    Memo1.Lines.Add(Status.Code.ToString +': '+ Status.Text);
   end;
 end;
 
@@ -73,47 +82,79 @@ begin
 end;
 
 procedure TFormMain.Button3Click(Sender: TObject);
-var Description: String;
+var Status: TStatus;
 begin
-  NextCloud.CreatFolder(Edit4.Text, Description);
-  Memo1.Lines.Add(Description);
+  NextCloud.CreatFolder(Edit4.Text, Status);
+  Memo1.Lines.Add(Status.Code.ToString +': '+ Status.Text);
 end;
 
 procedure TFormMain.Button4Click(Sender: TObject);
-var Description: String;
+var Status: TStatus;
 begin
   if OpenDialog1.Execute then
   begin
-    NextCloud.UploadFile(Edit4.Text, OpenDialog1.FileName, Description);
-    Memo1.Lines.Add(Description);
+    NextCloud.UploadFile(Edit4.Text, OpenDialog1.FileName, Status);
+    Memo1.Lines.Add(Status.Code.ToString +': '+ Status.Text);
   end;
 end;
 
 procedure TFormMain.Button5Click(Sender: TObject);
-var Description: String;
+var Status: TStatus;
 begin
-  NextCloud.DeleteFile(Edit4.Text, Description);
-  Memo1.Lines.Add(Description);
+  NextCloud.DeleteFile(Edit4.Text, Status);
+  Memo1.Lines.Add(Status.Code.ToString +': '+ Status.Text);
 end;
 
 procedure TFormMain.Button6Click(Sender: TObject);
-var Description, s: String;
+var s: String;
     FileList: TFileList;
+    c1, c2: word;
+    Status: TStatus;
 begin
-  FileList:= NextCloud.GetListFolder(Edit4.Text, 0, Description);
-  Memo1.Lines.Add(Description);
+  try
+    FileList:= NextCloud.GetListFolder(Edit4.Text, CheckBox2.IsChecked, Status);
+  finally
+    Memo1.Lines.Add(Status.Code.ToString +': '+ Status.Text);
+  end;
+  if Status.Code<>207 then Exit;
 
-    for var key in FileList.Keys do
+
+  //    !!!!!!!!!!     БЕЗ ВЫРАВНИВАНИЯ. оно и не нужно обычно.        !!!!!!!
+   { for var key in FileList.Keys do
       begin
       if FileList[key].IsFolder then
         s:= FileList[key].FilePath + ' | DIR ' + ' | ' + FileList[key].FileDate
       else
         s:= FileList[key].FilePath + ' | ' + FormatByteString(FileList[key].FileSize.ToInt64) + ' | ' + FileList[key].FileDate;
       Memo1.Lines.Add(s);
+      end; }
+
+  //    !!!!!!!!!!     С ВЫРАВНИВАНИЕМ.          !!!!!!!!
+  c1:=2; c2:=2;
+  for var key in FileList.Keys do
+    begin
+      c1:= max(FileList[key].FilePath.Length, c1);
+      if FileList[key].IsFolder then
+        begin
+          FileList[key].FileSize:= 'DIR';
+          c2:= max(3, c2);
+        end
+      else
+        begin
+          FileList[key].FileSize:= FormatByteString(FileList[key].FileSize.ToInt64);
+          c2:= max(FileList[key].FileSize.Length, c2);
+        end;
+    end;
+    Memo1.Lines.Add('FileName'.PadRight(c1, ' ') + ' | ' + 'Size'.PadRight(c2, ' ') + ' | ' + 'Date');
+    Memo1.Lines.Add('--'.PadRight(c1, '-') + '-|-' + '--'.PadRight(c2, '-') + '-|-' + '--'.PadRight(29, '-'));
+    for var key in FileList.Keys do
+      begin
+      s:= FileList[key].FilePath.PadRight(c1, ' ') + ' | ' + FileList[key].FileSize.PadRight(c2, ' ') + ' | ' + FileList[key].FileDate;
+      Memo1.Lines.Add(s);
       end;
 
 end;
-                  //lll
+
 procedure TFormMain.Button7Click(Sender: TObject);
 var ini: TIniFile;
 begin
