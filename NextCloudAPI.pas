@@ -13,7 +13,7 @@ Type
 
   TFileList = TDictionary<String, TFileInfo>;
 
-  TStatus = class
+  TStatus = record
     Code: Integer;
     Text: string;
   end;
@@ -164,13 +164,14 @@ begin
     Response:=FHTTPClient.Execute('PROPFIND', TURI.Create(FBaseURL + Path));
     Status.Code:= Response.StatusCode;
     Status.Text:= Response.StatusText;
+
   except
-   // Description:= 'ERROR: ' + Description;
-    FHTTPClient.CustHeaders.Delete('Depth');
+    on E : Exception do
+      begin
+        Status.Code:= -1;
+        Status.Text:= 'ERROR: ' + E.Message;
+      end;
   end;
-
-  var Caption:= Response.ContentAsString();
-
 
   if Response.StatusCode=207 then
     begin
@@ -212,11 +213,10 @@ begin
 
         FileDB.Add(FileGet.FilePath, FileGet);
         end;
-
       finally;
+        FHTTPClient.CustHeaders.Delete('Depth');
         Result:= FileDB;
         XMLFile.Free;
-        //FileDB.Free;
       end;
 
     end;
