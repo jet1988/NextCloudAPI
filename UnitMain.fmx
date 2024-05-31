@@ -20,6 +20,8 @@ object FormMain: TFormMain
   object Memo1: TMemo
     Touch.InteractiveGestures = [Pan, LongTap, DoubleTap]
     DataDetectorTypes = []
+    StyledSettings = [Size, Style, FontColor]
+    TextSettings.Font.Family = 'Cascadia Code'
     Anchors = [akLeft, akTop, akRight, akBottom]
     Position.X = 8.000000000000000000
     Position.Y = 248.000000000000000000
@@ -158,10 +160,19 @@ object FormMain: TFormMain
       Size.Width = 96.000000000000000000
       Size.Height = 22.000000000000000000
       Size.PlatformDefault = False
-      TabOrder = 9
+      TabOrder = 5
       Text = 'Save ini'
       TextSettings.Trimming = None
       OnClick = Button8Click
     end
+  end
+  object CheckBox2: TCheckBox
+    Position.X = 400.000000000000000000
+    Position.Y = 192.000000000000000000
+    Size.Width = 81.000000000000000000
+    Size.Height = 19.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 21
+    Text = 'Depth'
   end
 end
