@@ -118,7 +118,6 @@ begin
   end;
   if Status.Code<>207 then Exit;
 
-
   //    !!!!!!!!!!     БЕЗ ВЫРАВНИВАНИЯ. оно и не нужно обычно.        !!!!!!!
    { for var key in FileList.Keys do
       begin
@@ -137,7 +136,7 @@ begin
       if FileList[key].IsFolder then
         begin
           FileList[key].FileSize:= 'DIR';
-          c2:= max(3, c2);
+          c2:= max(4, c2);
         end
       else
         begin
